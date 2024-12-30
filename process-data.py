@@ -3,17 +3,22 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from io import BytesIO
 
-def process_files(file_list, output_dir, save_plot_as_png, combine):
+def process_files(file_list, output_dir, save_plot_as_png, combine, input_path):
     combined_df = pd.DataFrame()
-    fig, ax = plt.subplots(figsize=(10, 6)) if combine else None
+    if combine:
+        fig, ax = plt.subplots(figsize=(10, 6))
+    else:
+        fig, ax = None, None
 
     for input_file in file_list:
         with open(input_file, newline='') as csvfile:
             reader = csv.reader(csvfile, delimiter='\t')
-            next(reader)  # Skip the date and time header
-            next(reader)  # Skip the column headers
+            datetime_str = next(reader)[0]
+            next(reader)  # Skip the second header line
             data = list(reader)
         df = pd.DataFrame(data, columns=['Reading', 'Load [ozFin]', 'Time [sec.]'])
+        df['Trial'] = os.path.basename(input_file)
+        df['Datetime'] = datetime_str
         df['Reading'] = pd.to_numeric(df['Reading'])
         df['Load [ozFin]'] = pd.to_numeric(df['Load [ozFin]'])
         df['Time [sec.]'] = pd.to_numeric(df['Time [sec.]'])
@@ -26,15 +31,16 @@ def process_files(file_list, output_dir, save_plot_as_png, combine):
             save_data_and_plot(df, input_file, output_dir, save_plot_as_png)
 
     if combine:
-        output_xlsx = os.path.join(output_dir, "combined_data.xlsx")
+        directory_name = os.path.basename(os.path.normpath(input_path))
+        output_xlsx = os.path.join(output_dir, f"{directory_name}.xlsx")
         writer = pd.ExcelWriter(output_xlsx, engine='xlsxwriter')
-        combined_df.to_excel(writer, sheet_name='Combined Data', index=False)
+        combined_df.to_excel(writer, sheet_name='Data', index=False)
         ax.legend()
         ax.set_title('Combined Scatter Plot of Load vs Time')
         ax.set_xlabel('Time [sec.]')
         ax.set_ylabel('Absolute Load [ozFin]')
         ax.grid(True)
-        finalize_plot(ax, writer, save_plot_as_png, 'combined_plot.png')
+        finalize_plot(ax, writer, save_plot_as_png, f"{directory_name}_plot.png", output_dir)
 
 def save_data_and_plot(df, input_file, output_dir, save_plot_as_png):
     base_name = os.path.splitext(os.path.basename(input_file))[0]
@@ -49,11 +55,12 @@ def save_data_and_plot(df, input_file, output_dir, save_plot_as_png):
     ax.set_ylabel('Absolute Load [ozFin]')
     ax.grid(True)
     ax.legend()
-    finalize_plot(ax, writer, save_plot_as_png, f"{base_name}_plot.png")
+    finalize_plot(ax, writer, save_plot_as_png, f"{base_name}_plot.png", output_dir)
 
-def finalize_plot(ax, writer, save_plot_as_png, plot_filename):
+def finalize_plot(ax, writer, save_plot_as_png, plot_filename, output_dir):
     if save_plot_as_png:
-        plt.savefig(os.path.join(writer.path, plot_filename))
+        plot_full_path = os.path.join(output_dir, plot_filename)
+        plt.savefig(plot_full_path)
         plt.close()
     else:
         imgdata = BytesIO()
@@ -90,7 +97,7 @@ def main(argv):
         os.makedirs(output_dir, exist_ok=True)
         file_list = [os.path.join(input_path, f) for f in os.listdir(input_path)] if os.path.isdir(input_path) else [input_path]
 
-        process_files(file_list, output_dir, save_plot_as_png, combine)
+        process_files(file_list, output_dir, save_plot_as_png, combine, input_path)
 
     except getopt.GetoptError as err:
         print(str(err))
