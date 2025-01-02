@@ -20,6 +20,16 @@ You can install these packages using pip:
 
     pip install pandas matplotlib xlsxwriter
 
+### Virtual Environment
+
+If you want to use a virtual environment, you can initialize one using this command:
+
+    python -m venv myenv
+
+To activate an existing virtual environment, use this command:
+
+    myenv\Scripts\activate.bat
+
 ## Usage
 
 ### Command Line Arguments
