@@ -39,6 +39,8 @@ def process_files(file_list, output_dir, save_plot_as_png, combine, input_path):
         ax.set_title('Combined Scatter Plot of Load vs Time')
         ax.set_xlabel('Time [sec.]')
         ax.set_ylabel('Absolute Load [ozFin]')
+        plt.xlim(0, 80)  # Set x-axis limits
+        plt.ylim(0, 50)  # Set y-axis limits
         ax.grid(True)
         finalize_plot(ax, writer, save_plot_as_png, f"{directory_name}_plot.png", output_dir)
 
@@ -53,6 +55,8 @@ def save_data_and_plot(df, input_file, output_dir, save_plot_as_png):
     ax.set_title(f'Scatter Plot of Load vs Time for {base_name}')
     ax.set_xlabel('Time [sec.]')
     ax.set_ylabel('Absolute Load [ozFin]')
+    plt.xlim(0, 80)  # Set x-axis limits
+    plt.ylim(0, 50)  # Set y-axis limits
     ax.grid(True)
     ax.legend()
     finalize_plot(ax, writer, save_plot_as_png, f"{base_name}_plot.png", output_dir)
